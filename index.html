@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Komposita</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <main class="game-shell">
+        
+        <!-- 1. Action Sidebar Rail -->
+        <aside class="action-rail" aria-label="Actions">
+            <div class="sidebar-brand">
+                <div>
+                    <p class="eyebrow">Deutsch lernen</p>
+                    <h1>Komposita</h1>
+                </div>
+            </div>
+            <nav class="action-list" aria-label="Actions">
+                <button id="clean-up-table-button" class="action-button" type="button">
+                    <img class="action-icon" src="data/cleaning.png" alt="Clean up table">
+                    <span class="action-label">Clean up table</span>
+                </button>
+                <button id="clean-up-list-button" class="action-button" type="button">
+                    <img class="action-icon" src="data/liste.png" alt="Clean up list">
+                    <span class="action-label">Clean up list</span>
+                </button>
+                <button id="settings-button" class="action-button" type="button">
+                    <img class="action-icon" src="data/settings.png" alt="Settings">
+                    <span class="action-label">Settings</span>
+                </button>
+                <button id="encyclopedia-button" class="action-button" type="button">
+                    <img class="action-icon" src="data/dictionary.png" alt="Dictionary">
+                    <span class="action-label">Dictionary</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- 2. Discovery Area & Workspace -->
+        <section class="play-area" aria-label="Discovery area">
+            <div class="search-dock" aria-label="Search">
+                <div class="search-actions">
+                    <button id="search-toggle" class="search-toggle" type="button" aria-label="Search names" aria-expanded="false" title="Search names">⌕</button>
+                    <button id="search-close-button" class="search-close-button" type="button" aria-label="Close search" title="Close search" hidden>×</button>
+                    <button id="add-word-button" class="add-word-button" type="button" aria-label="Add a word" title="Add a word">+</button>
+                    <button id="add-close-button" class="add-close-button" type="button" aria-label="Close add word" title="Close add word" hidden>×</button>
+                </div>
+                
+                <!-- Search Panel -->
+                <div id="search-panel" class="search-panel" hidden>
+                    <div class="search-field">
+                        <button id="category-toggle" class="category-toggle" type="button" aria-label="Filter by class" aria-expanded="false" title="Filter by class">☰</button>
+                        <input id="element-search" type="search" placeholder="Search words" />
+                    </div>
+                    <label id="category-field" class="category-field" for="category-filter" hidden>
+                        <span>Class</span>
+                        <select id="category-filter">
+                            <option value="all">All classes</option>
+                            <option value="noun">Nouns</option>
+                            <option value="verb">Verbs</option>
+                            <option value="adverb">Adverbs</option>
+                            <option value="preposition">Prepositions</option>
+                            <option value="adjective">Adjectives</option>
+                        </select>
+                    </label>
+                </div>
+
+                <!-- Add Word Panel -->
+                <div id="add-panel" class="add-panel" hidden>
+                    <div class="search-field">
+                        <button id="add-category-toggle" class="category-toggle" type="button" aria-label="Filter by class" aria-expanded="false" title="Filter by class">☰</button>
+                        <input id="add-word-search" type="search" placeholder="Add a word" autocomplete="off" />
+                    </div>
+                    <label id="add-category-field" class="category-field" for="add-category-filter" hidden>
+                        <span>Class</span>
+                        <select id="add-category-filter">
+                            <option value="all">All classes</option>
+                            <option value="noun">Nouns</option>
+                            <option value="verb">Verbs</option>
+                            <option value="adverb">Adverbs</option>
+                            <option value="preposition">Prepositions</option>
+                            <option value="adjective">Adjectives</option>
+                        </select>
+                    </label>
+                    <div id="add-suggestions" class="add-suggestions" role="listbox" aria-label="Word suggestions"></div>
+                </div>
+            </div>
+
+            <!-- Workspace Canvas -->
+            <div id="workspace" class="workspace" aria-live="polite"></div>
+        </section>
+
+        <!-- 3. Word Registry Sidebar -->
+        <aside class="element-panel" aria-label="Words">
+            <div id="element-list" class="element-list"></div>
+        </aside>
+    </main>
+
+    <p id="result-text" class="sr-only" role="status" aria-live="polite">Ready.</p>
+
+    <!-- JavaScript Modules / Frontend Scripts -->
+    <script src="js/dictionary.js"></script>
+    <script src="js/emoji-image.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/workspace.js"></script>
+    <script src="js/crafting.js"></script>
+    <script src="js/word-list.js"></script>
+    <script src="js/search-panel.js"></script>
+    <script src="js/add-word-panel.js"></script>
+    <script src="js/action-button.js"></script>
+    <script src="js/clean-up-table-button.js"></script>
+    <script src="js/clean-up-list-button.js"></script>
+    <script src="js/settings-button.js"></script>
+    <script src="js/dictionary-button.js"></script>
+    <script src="js/main.js"></script>
+    
+</body>
+</html>
