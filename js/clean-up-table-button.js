@@ -4,13 +4,6 @@ class CleanUpTableButton extends ActionButton {
 		this.actionName = "clean-up-table";
 	}
 
+	// clearing the tableau is cheap to redo, so it acts immediately without a dialog
 	openWindow() {}
-
-	getWindowTitle() {
-		return "Clean up table";
-	}
-
-	getWindowMessage() {
-		return "The tableau is ready to be cleaned up. You can use this space for the next composition.";
-	}
 }

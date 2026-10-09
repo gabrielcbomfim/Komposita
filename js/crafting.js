@@ -1,8 +1,13 @@
+// Recipe engine. Every compound is reduced to its "roots" — the non-compound
+// words it is ultimately built from — so the same compound can be crafted at
+// any level of decomposition:
+//   Haus + Tür + Schlüssel  =  Haustür + Schlüssel  =  Haustürschlüssel
+// Linking elements (Fugenelemente such as "-s-" or "-n-") are ignored.
 class Crafting {
 	constructor(dictionary) {
 		this.dictionary = dictionary;
-		this.byWord = new Map();  // "apfel" -> entrada
-		this.recipes = new Map(); // "apfel|baum" -> entrada de Apfelbaum
+		this.byWord = new Map();  // "apfel" -> entry
+		this.recipes = new Map(); // "apfel|baum" -> entry for Apfelbaum
 	}
 
 	build() {
@@ -11,19 +16,19 @@ class Crafting {
 		for (const entry of this.dictionary.items) this.byWord.set(entry.word.toLowerCase(), entry);
 		for (const entry of this.dictionary.items) {
 			const roots = entry.isCompound && entry.components ? this.roots(entry.word) : [entry.word.toLowerCase()];
-			entry.isBase = roots.length < 2; // palavra nuclear (sem composição)
+			entry.isBase = roots.length < 2; // base word (not a compound)
 			if (!entry.isBase) {
 				this.recipes.set(roots.join("|"), entry);
-				entry.discovered = entry.discovered === true; // mantém o que veio salvo, senão false
+				entry.discovered = entry.discovered === true; // keep saved state, otherwise false
 			} else {
-				entry.discovered = true; // palavra base já nasce descoberta
+				entry.discovered = true; // base words start out discovered
 			}
 		}
 	}
 
 	roots(word, path = []) {
 		const key = word.toLowerCase();
-		if (path.includes(key)) return [key];
+		if (path.includes(key)) return [key]; // guard against circular entries
 		const entry = this.byWord.get(key);
 		if (!entry || !entry.isCompound || !entry.components) return [key];
 		const parts = entry.components.filter((c) => !c.includes("-")).map((c) => c.toLowerCase());

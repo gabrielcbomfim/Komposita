@@ -1,0 +1,24 @@
+{
+  "name": "komposita",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A word-crafting game for learning German compound nouns (Komposita).",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gabrielcbomfim/Komposita.git"
+  },
+  "scripts": {
+    "start": "npx --yes http-server -c-1 -o",
+    "build:dictionary": "node scripts/build-dictionary.js",
+    "generate:emojis": "node scripts/generate-emojis-ai.js",
+    "demo:crafting": "node scripts/crafting-demo.js"
+  },
+  "devDependencies": {
+    "@desert-ant-labs/emo": "^3.6.0",
+    "emojibase-data": "^17.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

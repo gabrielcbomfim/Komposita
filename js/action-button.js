@@ -40,8 +40,7 @@ class ActionButton {
 		closeButton.addEventListener("click", () => this.closeWindow());
 		header.append(title, closeButton);
 
-		// o corpo da janela agora é montado por renderContent(),
-		// que cada botão filho pode sobrescrever
+		// the window body is built by renderContent(), which each subclass can override
 		const content = document.createElement("div");
 		content.className = "action-window-content";
 		this.renderContent(content);
@@ -63,7 +62,7 @@ class ActionButton {
 		this.window = null;
 	}
 
-	// cria um botão padrão para as janelas
+	// creates a standard button for the dialogs
 	createButton(text, onClick, { danger = false, autofocus = false } = {}) {
 		const button = document.createElement("button");
 		button.type = "button";

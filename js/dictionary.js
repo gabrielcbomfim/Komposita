@@ -1,3 +1,5 @@
+// Loads the word list (one JSON entry per line). If the optional AI emoji table
+// produced by scripts/generate-emojis-ai.js exists, its emojis override the defaults.
 class Dictionary {
 	constructor(url = "data/german-words.jsonl", emojiCacheUrl = "data/german-words-with-emojis-ai.jsonl") {
 		this.url = url;
@@ -33,9 +35,14 @@ class Dictionary {
 		return this.getName(element).toLowerCase();
 	}
 
+	// Case matters in German (die Orange vs orange, Sonne vs sonne), so an exact
+	// match wins; "die orange" also resolves to the noun via its article.
 	find(value) {
-		const query = value.trim().toLowerCase();
-		return this.items.find((element) => element.word.toLowerCase() === query || this.getSearchName(element) === query);
+		const exact = value.trim();
+		const query = exact.toLowerCase();
+		return this.items.find((element) => element.word === exact) ||
+			this.items.find((element) => this.getSearchName(element) === query) ||
+			this.items.find((element) => element.word.toLowerCase() === query);
 	}
 
 	getDiscovered() {
@@ -45,10 +52,10 @@ class Dictionary {
 	}
 
 	suggest(query, category = "all", limit = 6) {
-			const normalizedQuery = query.trim().toLowerCase();
-			return this.items.filter((element) => {
-				return (!normalizedQuery || this.getSearchName(element).includes(normalizedQuery)) &&
-					(category === "all" || element.partOfSpeech === category);
-			}).slice(0, limit);
-		}
+		const normalizedQuery = query.trim().toLowerCase();
+		return this.items.filter((element) => {
+			return (!normalizedQuery || this.getSearchName(element).includes(normalizedQuery)) &&
+				(category === "all" || element.partOfSpeech === category);
+		}).slice(0, limit);
+	}
 }

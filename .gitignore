@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Local secrets — never commit API keys
+*.local.json
+.env
+.env.*
+
+# Raw Wiktionary dump used by scripts/build-dictionary.js (several GB)
+kaikki.org-dictionary-*.jsonl
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

@@ -1,8 +1,11 @@
-// Gera a tabela palavra -> emoji com um LLM (OpenRouter), em lotes, com retomada.
-// Uso:
-//   export OPENROUTER_API_KEY=sk-or-...        (NÃO coloque a chave em arquivo servido pelo site)
-//   node generate-emojis-ai.js [entrada.jsonl] [saida.jsonl] [limite]
-// Saída: uma linha por palavra: {"word":"Hund","emoji":"🐕"} ; emoji null = sem emoji adequado.
+// Builds a word -> emoji table with an LLM (via OpenRouter), in batches, resumable.
+//
+// Usage:
+//   export OPENROUTER_API_KEY=sk-or-...   (never put the key in a file served by the site or committed to git)
+//   node scripts/generate-emojis-ai.js [input.jsonl] [output.jsonl] [limit]
+//
+// Output: one line per word, e.g. {"word":"Hund","emoji":"🐕"}; emoji null = no suitable emoji.
+// The game picks this file up automatically (see js/dictionary.js).
 const fs = require("node:fs");
 const readline = require("node:readline");
 
@@ -13,12 +16,12 @@ const apiKey = process.env.OPENROUTER_API_KEY;
 const model = process.env.EMOJI_MODEL || "poolside/laguna-s-2.1:free";
 const BATCH = 50;
 
-if (!apiKey) { console.error("Defina OPENROUTER_API_KEY."); process.exit(1); }
+if (!apiKey) { console.error("Set the OPENROUTER_API_KEY environment variable."); process.exit(1); }
 
-const SYSTEM = `Você recebe uma lista JSON de palavras alemãs (com classe gramatical).
-Para cada uma, escolha UM emoji que represente bem o significado. Se a palavra for abstrata
-demais para ter um emoji claro (ex.: preposições, pronomes, conceitos abstratos), use null.
-Responda SOMENTE com um objeto JSON {"palavra": "emoji ou null", ...}, sem texto extra nem markdown.`;
+const SYSTEM = `You receive a JSON list of German words (with their part of speech).
+For each one, choose ONE emoji that represents its meaning well. If the word is too abstract
+to have a clear emoji (e.g. prepositions, pronouns, abstract concepts), use null.
+Reply ONLY with a JSON object {"word": "emoji or null", ...}, with no extra text or markdown.`;
 
 async function ask(batch) {
 	const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -42,14 +45,14 @@ async function askWithRetry(batch, tries = 3) {
 	for (let i = 1; ; i++) {
 		try { return await ask(batch); }
 		catch (error) {
-			if (i >= tries) { console.warn("Lote ignorado:", error.message); return {}; }
+			if (i >= tries) { console.warn("Batch skipped:", error.message); return {}; }
 			await new Promise((r) => setTimeout(r, 2000 * i));
 		}
 	}
 }
 
 async function main() {
-	// retomada: pula palavras que já estão na saída
+	// resume: skip words already in the output
 	const done = new Set();
 	if (fs.existsSync(outputPath)) {
 		for (const line of fs.readFileSync(outputPath, "utf8").split("\n").filter(Boolean)) done.add(JSON.parse(line).word);
@@ -62,12 +65,12 @@ async function main() {
 		if (!batch.length) return;
 		const result = await askWithRetry(batch);
 		for (const e of batch) {
-			if (!(e.word in result)) continue; // resposta faltou: tenta de novo numa próxima execução
-			const emoji = typeof result[e.word] === "string" ? [...result[e.word].trim()].length ? result[e.word].trim() : null : null;
+			if (!(e.word in result)) continue; // missing from the reply: retried on the next run
+			const emoji = typeof result[e.word] === "string" && result[e.word].trim() ? result[e.word].trim() : null;
 			out.write(JSON.stringify({ word: e.word, emoji }) + "\n");
 		}
 		processed += batch.length;
-		console.log(`${processed} palavras processadas`);
+		console.log(`${processed} words processed`);
 		batch = [];
 	};
 
@@ -82,4 +85,5 @@ async function main() {
 	await flush();
 	out.end();
 }
+
 main().catch((e) => { console.error(e.message); process.exitCode = 1; });

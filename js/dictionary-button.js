@@ -1,5 +1,5 @@
 class DictionaryButton extends ActionButton {
-	// getWords: devolve as palavras já descobertas; getName: "der Apfel" etc.
+	// getWords: returns the discovered compounds; getName: "der Apfel", etc.
 	constructor(element, { getWords, getName }) {
 		super(element);
 		this.actionName = "dictionary";

@@ -1,5 +1,5 @@
 class CleanUpListButton extends ActionButton {
-	// onConfirm só roda depois que o usuário confirma na janela
+	// onConfirm only runs after the user confirms in the dialog
 	constructor(element, onConfirm) {
 		super(element);
 		this.actionName = "clean-up-list";
@@ -16,7 +16,7 @@ class CleanUpListButton extends ActionButton {
 
 		const actions = document.createElement("div");
 		actions.className = "action-window-actions";
-		// o foco começa em "Cancel" para evitar limpar sem querer com Enter
+		// focus starts on "Cancel" so pressing Enter doesn't clear the list by accident
 		const cancel = this.createButton("Cancel", () => this.closeWindow(), { autofocus: true });
 		const confirm = this.createButton("Clean up", () => {
 			this.closeWindow();

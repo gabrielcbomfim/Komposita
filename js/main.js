@@ -1,42 +1,36 @@
-// Troque pelos seus dados reais
 const CONTACT_GITHUB = "gabrielcbomfim/Komposita";
 const THANKS = "Thank you for playing Komposita! Suggestions and contributions are welcome on GitHub.";
 
 class KompositaApp {
 	constructor() {
-		this.simpleImageUrl = "data/simple-image.svg";
-		this.elements = [];
-		this.searchMode = "search";
 		this.cacheElements();
 		this.dictionary = new Dictionary();
 		this.crafting = new Crafting(this.dictionary);
-		this.imageGenerator = new EmojiImageGenerator();
+		this.emojiService = new EmojiService();
 		this.audio = new GameAudio();
+		const getName = (element) => this.dictionary.getName(element);
 		this.wordList = new WordList({
 			container: this.elementList,
-			imageUrl: this.simpleImageUrl,
-			getImageUrl: (element) => this.imageGenerator.getImageUrl(element),
+			getName,
 			onSelect: (element) => this.setStatus(`${element.word} selected.`),
 			onDragStart: (event, element) => {
 				event.dataTransfer.setData("application/json", JSON.stringify(element));
 				event.dataTransfer.effectAllowed = "copy";
-				this.imageGenerator.setEmojiDragImage(event, element.emoji || "❓");
+				this.emojiService.setDragImage(event, element.emoji || "❓");
 			}
 		});
 		this.workspace = new Workspace({
 			container: this.workspaceElement,
-			imageUrl: this.simpleImageUrl,
-			getImageUrl: (element) => this.imageGenerator.getImageUrl(element),
-			setDragImage: (event, emoji) => this.imageGenerator.setEmojiDragImage(event, emoji),
+			getName,
 			onCombine: (elements) => this.combine(elements),
 			onSelect: (element) => this.setStatus(`${element.word} selected.`),
 			onStatus: (message) => this.setStatus(message),
 			onSound: (name) => this.audio.play(name)
 		});
-		this.searchPanelController = new SearchPanel({
+		this.searchPanel = new SearchPanel({
 			toggle: this.searchToggle,
 			closeButton: this.searchCloseButton,
-			panel: this.searchPanel,
+			panel: this.searchPanelElement,
 			input: this.elementSearch,
 			categoryToggle: this.categoryToggle,
 			categoryField: this.categoryField,
@@ -56,15 +50,15 @@ class KompositaApp {
 			categoryFilter: this.addCategoryFilter,
 			onQuery: (query, category) => this.renderAddSuggestions(query, category),
 			onAdd: (value) => this.addWordToList(value),
-			getName: (element) => this.getElementName(element),
+			getName,
 			onClose: () => this.wordList.render(),
 			onOpen: () => {
-				this.searchPanelController?.close();
+				this.searchPanel?.close();
 				this.setStatus("Type a word and press Enter to add it.");
 			}
 		});
-		this.bindEvents();
-		this.loadElements();
+		this.bindActions();
+		this.loadDictionary();
 	}
 
 	cacheElements() {
@@ -75,7 +69,7 @@ class KompositaApp {
 		this.searchCloseButton = document.querySelector("#search-close-button");
 		this.addWordButton = document.querySelector("#add-word-button");
 		this.addCloseButton = document.querySelector("#add-close-button");
-		this.searchPanel = document.querySelector("#search-panel");
+		this.searchPanelElement = document.querySelector("#search-panel");
 		this.addPanel = document.querySelector("#add-panel");
 		this.addWordSearch = document.querySelector("#add-word-search");
 		this.addSuggestions = document.querySelector("#add-suggestions");
@@ -88,27 +82,27 @@ class KompositaApp {
 		this.workspaceElement = document.querySelector("#workspace");
 	}
 
-	bindEvents() {
+	bindActions() {
 		new CleanUpTableButton(document.querySelector("#clean-up-table-button"), () => {
 			this.workspace.clear();
 			this.setStatus("Workspace cleaned up.");
 		});
-		// só limpa depois que o usuário confirma na janela
+		// only clears after the user confirms in the dialog
 		new CleanUpListButton(document.querySelector("#clean-up-list-button"), () => this.clearList());
 		new SettingsButton(document.querySelector("#settings-button"), {
 			audio: this.audio,
 			contactGithub: CONTACT_GITHUB,
 			thanks: THANKS
 		});
-		new DictionaryButton(document.querySelector("#encyclopedia-button"), {
+		new DictionaryButton(document.querySelector("#dictionary-button"), {
 			getWords: () => this.dictionary.getDiscovered(),
-			getName: (element) => this.getElementName(element)
+			getName: (element) => this.dictionary.getName(element)
 		});
 	}
 
-	async loadElements() {
+	async loadDictionary() {
 		try {
-			this.elements = await this.dictionary.load();
+			await this.dictionary.load();
 			this.crafting.build();
 			this.wordList.render();
 		} catch (error) {
@@ -124,29 +118,21 @@ class KompositaApp {
 		this.wordList.add(result);
 		this.wordList.render();
 		this.audio.play("discover");
-		this.setStatus(`${elements.map((e) => e.word).join(" + ")} = ${this.getElementName(result)}`);
-		this.imageGenerator.resolveEmoji(result)
+		this.setStatus(`${elements.map((e) => e.word).join(" + ")} = ${this.dictionary.getName(result)}`);
+		this.emojiService.resolveEmoji(result)
 			.then(() => {
 				this.wordList.render();
 				this.workspace.refreshEmoji(result);
 			})
-			.catch((error) => console.warn("Could not generate emoji.", error));
+			.catch((error) => console.warn("Could not resolve emoji.", error));
 		return result;
-	}
-
-	getElementName(element) {
-		return this.dictionary.getName(element);
-	}
-
-	getSearchName(element) {
-		return this.dictionary.getSearchName(element);
 	}
 
 	setStatus(message) {
 		this.resultText.textContent = message;
 	}
 
-async addWordToList(value) {
+	async addWordToList(value) {
 		const word = value.trim().replace(/[<>]/g, "");
 		if (!word) return;
 		const match = this.dictionary.find(word);
@@ -158,9 +144,9 @@ async addWordToList(value) {
 		match.discovered = true;
 
 		try {
-			await this.imageGenerator.resolveEmoji(match);
+			await this.emojiService.resolveEmoji(match);
 		} catch (error) {
-			console.warn("Could not generate emoji; using local fallback.", error);
+			console.warn("Could not resolve emoji; keeping the dictionary one.", error);
 		}
 		this.wordList.add(match);
 		this.addWordSearch.value = "";
@@ -173,7 +159,7 @@ async addWordToList(value) {
 		const suggestions = this.dictionary.suggest(query, category);
 		this.addWordPanel.renderSuggestions(suggestions);
 	}
-	
+
 	filterElements(query = this.elementSearch.value, category = this.categoryFilter.value) {
 		query = query.trim().toLowerCase();
 		const matches = this.wordList.filter(query, category);

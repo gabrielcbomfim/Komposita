@@ -1,11 +1,9 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 class Workspace {
-	constructor({ container, imageUrl, getImageUrl, setDragImage, onCombine, onSelect, onStatus, onSound }) {
+	constructor({ container, getName, onCombine, onSelect, onStatus, onSound }) {
 		this.container = container;
-		this.imageUrl = imageUrl;
-		this.getImageUrl = getImageUrl;
-		this.setDragImage = setDragImage;
+		this.getName = getName;
 		this.onCombine = onCombine;
 		this.onSelect = onSelect;
 		this.onStatus = onStatus;
@@ -24,12 +22,14 @@ class Workspace {
 	}
 
 	bindEvents() {
-		// o drag nativo serve só para vir da lista de palavras
+		// native drag & drop is only used to bring words in from the word list
 		this.container.addEventListener("dragover", (event) => {
 			event.preventDefault();
 			event.dataTransfer.dropEffect = "copy";
 		});
 		this.container.addEventListener("drop", (event) => this.handleDrop(event));
+		// tokens are positioned in % but link lines in px, so redraw lines on resize
+		new ResizeObserver(() => this.updateLinks()).observe(this.container);
 	}
 
 	handleDrop(event) {
@@ -61,19 +61,16 @@ class Workspace {
 		node.title = element.word;
 		node.style.left = `${x}%`;
 		node.style.top = `${y}%`;
-		
-		node.style.setProperty("opacity", "1", "important");
-		node.style.setProperty("visibility", "visible", "important");
 
 		const emojiDisplay = document.createElement("div");
 		emojiDisplay.className = "element-emoji";
 		emojiDisplay.textContent = element.emoji || "❓";
 		const label = document.createElement("span");
 		label.className = "workspace-label";
-		label.textContent = element.article && element.partOfSpeech === "noun" ? `${element.article} ${element.word}` : element.word;
+		label.textContent = this.getName(element);
 		const dot = document.createElement("span");
 		dot.className = "workspace-dot";
-		dot.title = "Arraste até outra palavra para ligar";
+		dot.title = "Drag onto another word's dot to link them";
 		node.append(emojiDisplay, label, dot);
 
 		const item = { id, element, node, dot, links: new Set() };
@@ -171,7 +168,7 @@ class Workspace {
 	}
 
 	link(a, b) {
-		if ([...a.links].some((l) => l.a === b || l.b === b)) return; // já ligados
+		if ([...a.links].some((l) => l.a === b || l.b === b)) return; // already linked
 		const line = this.createLine();
 		const link = { a, b, line };
 		line.addEventListener("dblclick", () => { this.unlink(link); this.onSound("unlink"); });
@@ -190,7 +187,8 @@ class Workspace {
 		this.links = this.links.filter((l) => l !== link);
 	}
 
-	// grupo conectado, ordenado da esquerda para a direita (como o alemão é lido)
+	// connected group, sorted left to right: the order in which the compound is read
+	// (German compounds are head-final, so Haus + Tür ≠ Tür + Haus)
 	getGroup(item) {
 		const seen = new Set([item]);
 		const stack = [item];
@@ -217,7 +215,7 @@ class Workspace {
 		const words = group.map((t) => t.element.word).join(" + ");
 		const result = this.onCombine(group.map((t) => t.element));
 		if (!result) {
-			if (announce) this.onStatus(`${words}: ligados, mas ainda não formam uma palavra.`);
+			if (announce) this.onStatus(`${words}: linked, but they don't form a word (yet).`);
 			return;
 		}
 		const x = group.reduce((s, t) => s + parseFloat(t.node.style.left), 0) / group.length;

@@ -1,12 +1,23 @@
+// Builds data/german-words.jsonl from a Wiktionary dump (Kaikki.org JSONL export).
+//
+// For every German entry it keeps the word, part of speech, article (for nouns),
+// compound analysis and one emoji. Emoji resolution runs fully offline:
+//   1. exact match in the Unicode CLDR emoji names/tags (German word, then English glosses)
+//   2. the local Emo model with good confidence
+//   3. for compounds, the emoji of the head (last component): Handschuh -> Schuh
+//   4. Emo's best guess, however weak
+//
+// Usage: node scripts/build-dictionary.js [input.jsonl] [output.jsonl]
+//        LIMIT=300 node scripts/build-dictionary.js   (quick test on a small sample)
 const fs = require("node:fs");
 const readline = require("node:readline");
 const path = require("node:path");
-const emojiDataDe = require("emojibase-data/de/data.json"); // nomes/tags Unicode em alemão
-const emojiDataEn = require("emojibase-data/en/data.json"); // nomes/tags Unicode em inglês
+const emojiDataDe = require("emojibase-data/de/data.json"); // Unicode emoji names/tags in German
+const emojiDataEn = require("emojibase-data/en/data.json"); // Unicode emoji names/tags in English
 
 const inputPath = process.argv[2] || "kaikki.org-dictionary-German-words.jsonl";
 const outputPath = process.argv[3] || "data/german-words.jsonl";
-const LIMIT = Number(process.env.LIMIT) || Infinity; // ex.: LIMIT=300 node build-dictionary.js
+const LIMIT = Number(process.env.LIMIT) || Infinity; // e.g. LIMIT=300 node scripts/build-dictionary.js
 
 const allowedPartsOfSpeech = new Set([
   "noun",
@@ -34,10 +45,10 @@ const wordPattern = /^[A-Za-zÄÖÜäöüẞßÀ-ÿ]+$/;
 const DEFAULT_EMOJI = "✨";
 const excludedTags = new Set([]);
 
-// === CONFIGURAÇÃO DO EMO ===
-const EMO_THRESHOLD = 0.5;       // confiança "boa" do Emo
-const EMO_GUESS_THRESHOLD = 0;   // último recurso: aceita o melhor palpite, por mais fraco que seja
-const MAX_CANDIDATES = 5;  // quantas glosses em inglês testar por palavra
+// === EMO SETTINGS ===
+const EMO_THRESHOLD = 0.5;       // "good" Emo confidence
+const EMO_GUESS_THRESHOLD = 0;   // last resort: accept the best guess, however weak
+const MAX_CANDIDATES = 5;  // how many English glosses to try per word
 const BAD_GLOSS = /^(alternative|obsolete|dated|archaic|misspelling|abbreviation|initialism|contraction|synonym of|superseded|eye dialect)/i;
 
 function getArticle(entry) {
@@ -73,7 +84,9 @@ function isCanonicalEntry(entry) {
     return !getEntryTags(entry).includes("form-of");
 }
 
-// === EXTRATOR DE COMPÓSITOS ===
+// === COMPOUND EXTRACTION ===
+// Tries, in order: Wiktionary etymology templates ({{compound|de|Hand|Schuh}}),
+// an "X + Y" pattern in the etymology text, compound categories, and hyphenation.
 function analyzeCompound(entry) {
     let isCompound = false;
     let components = [];
@@ -102,7 +115,7 @@ function analyzeCompound(entry) {
     }
 
     if (!isCompound && typeof entry.etymology_text === "string") {
-        // O Wiktionary põe marcas invisíveis (U+200E) depois do "+", o que quebra o \s da regex
+        // Wiktionary inserts invisible marks (U+200E) after the "+", which breaks \s in the regex
         const etymText = entry.etymology_text.replace(/[\u200e\u200f\u200b]/g, "");
         const match = etymText.match(/([A-ZÄÖÜäöüßa-z-]+)\s*\+\s*([A-ZÄÖÜäöüßa-z-]+)/);
         if (match) {
@@ -128,7 +141,7 @@ function analyzeCompound(entry) {
 
 function toCleanEntry(entry) {
     const partOfSpeech = normalizedPartsOfSpeech[entry.pos];
-    // Só substantivos podem ser compostos (o jogo só forma substantivos por composição)
+    // Only nouns are treated as compounds (the game only crafts nouns)
     const compoundData = partOfSpeech === "noun"
         ? analyzeCompound(entry)
         : { isCompound: false, components: [] };
@@ -138,7 +151,7 @@ function toCleanEntry(entry) {
         partOfSpeech,
         article: partOfSpeech === "noun" ? getArticle(entry) : null,
         isCompound: compoundData.isCompound,
-        emoji: DEFAULT_EMOJI // Vai ser substituído na geração
+        emoji: DEFAULT_EMOJI // replaced during emoji generation
     };
 
     if (compoundData.isCompound && compoundData.components.length > 0) {
@@ -148,25 +161,25 @@ function toCleanEntry(entry) {
     return cleanEntry;
 }
 
-// === GERAÇÃO DE EMOJI ===
+// === EMOJI GENERATION ===
 
 // "(anatomy) to eat, to devour" -> "eat"
 function cleanGloss(gloss) {
     return gloss
-        .replace(/\([^)]*\)/g, " ")       // remove "(anatomy)", "(figuratively)"...
-        .split(/[;,]/)[0]                 // fica só com a primeira alternativa
+        .replace(/\([^)]*\)/g, " ")       // drop "(anatomy)", "(figuratively)"...
+        .split(/[;,]/)[0]                 // keep only the first alternative
         .replace(/^to\s+/i, "")           // "to eat" -> "eat"
-        .replace(/^(a|an|the)\s+/i, "")   // tira artigos em inglês
+        .replace(/^(a|an|the)\s+/i, "")   // drop English articles
         .replace(/\s+/g, " ")
         .trim();
 }
 
-// Extrai glosses em inglês limpas: ["man", "male"...]
+// Extracts clean English glosses: ["man", "male"...]
 function getEnglishGlosses(entry) {
     const glosses = [];
     for (const sense of entry.senses || []) {
         const list = sense.glosses || [];
-        const gloss = list[list.length - 1]; // o mais específico
+        const gloss = list[list.length - 1]; // the most specific one
         if (typeof gloss !== "string" || BAD_GLOSS.test(gloss)) continue;
 
         const cleaned = cleanGloss(gloss);
@@ -178,18 +191,18 @@ function getEnglishGlosses(entry) {
     return glosses;
 }
 
-// Textos enviados ao Emo: glosses em inglês + a própria palavra (empréstimos: Pizza, Taxi...)
+// Texts sent to Emo: English glosses + the word itself (for loanwords: Pizza, Taxi...)
 function getQueryCandidates(entry) {
     return [...getEnglishGlosses(entry), entry.word];
 }
 
-// === BUSCA DIRETA NO DICIONÁRIO UNICODE (CLDR) ===
-// Índice: texto em minúsculas -> emoji. "labels" (nomes) têm prioridade sobre "tags".
+// === DIRECT LOOKUP IN THE UNICODE (CLDR) EMOJI DATA ===
+// Index: lowercase text -> emoji. "labels" (names) take priority over "tags".
 function buildLookup(data) {
     const labels = new Map();
-    const tagCounts = new Map(); // tag -> Set de emojis
+    const tagCounts = new Map(); // tag -> Set of emojis
     for (const e of data) {
-        if (e.group === undefined || e.group === 2) continue; // ignora componentes
+        if (e.group === undefined || e.group === 2) continue; // skip components (skin tones, hair styles...)
         const label = (e.label || "").toLowerCase();
         if (label && !labels.has(label)) labels.set(label, e.emoji);
         for (const tag of e.tags || []) {
@@ -198,7 +211,7 @@ function buildLookup(data) {
             tagCounts.get(t).add(e.emoji);
         }
     }
-    // tag só vale se apontar para UM emoji (evita ambiguidade)
+    // a tag only counts if it points to ONE emoji (avoids ambiguity)
     const uniqueTags = new Map();
     for (const [t, set] of tagCounts) if (set.size === 1) uniqueTags.set(t, [...set][0]);
     return { labels, uniqueTags };
@@ -212,7 +225,7 @@ function findInLookup(lookup, text) {
     return lookup.labels.get(t) || lookup.uniqueTags.get(t) || null;
 }
 
-// 1º a palavra alemã ("Mann" -> 👨), 2º as glosses em inglês ("man" -> 👨)
+// 1st the German word ("Mann" -> 👨), 2nd the English glosses ("man" -> 👨)
 function getEmojiFromUnicode(entry) {
     return (
         findInLookup(lookupDe, entry.word) ||
@@ -221,7 +234,7 @@ function getEmojiFromUnicode(entry) {
     );
 }
 
-// Testa todos os candidatos e fica com o emoji de maior confiança
+// Tries every candidate and keeps the emoji with the highest confidence
 async function getEmojiFromEmo(emo, candidates, threshold = EMO_THRESHOLD) {
     let best = null;
     for (const text of candidates) {
@@ -233,18 +246,18 @@ async function getEmojiFromEmo(emo, candidates, threshold = EMO_THRESHOLD) {
                 best = top;
             }
         } catch {
-            // ignora erros para não interromper o processamento em massa
+            // ignore errors so batch processing keeps going
         }
     }
     return best ? best.emoji : null;
 }
 
-// === SEGUNDA PASSADA: compostos que a etimologia do Wiktionary não registrou ===
-// Para cada substantivo ainda não marcado como composto, tenta dividi-lo em
-// [modificador] + [núcleo substantivo], onde tudo EXISTE no próprio dicionário:
+// === SECOND PASS: compounds that Wiktionary's etymology doesn't record ===
+// For every noun not yet marked as a compound, try to split it into
+// [modifier] + [noun head], where every part EXISTS in the dictionary itself:
 //   Feuerzeug = Feuer + Zeug
-//   Bahnhofstraße = Bahnhof + Straße            (elemento de ligação "s")
-//   Ultraleichtflugzeug = ultra + leicht + Flugzeug  (modificador com várias partes)
+//   Bahnhofstraße = Bahnhof + Straße            (linking element "s")
+//   Ultraleichtflugzeug = ultra + leicht + Flugzeug  (multi-part modifier)
 const LINKING_ELEMENTS = ["", "s", "n", "en", "e", "er", "es"];
 const MIN_PART = 3;
 
@@ -253,7 +266,7 @@ function capitalize(str) {
 }
 
 function markCompoundsByDecomposition(entries) {
-    // minúsculas -> palavra real do dicionário (substantivos têm prioridade)
+    // lowercase -> actual dictionary word (nouns take priority)
     const known = new Map();
     const nouns = new Set();
     for (const e of entries.values()) {
@@ -266,12 +279,12 @@ function markCompoundsByDecomposition(entries) {
         }
     }
 
-    // Decompõe o modificador em palavras existentes: "ultraleicht" -> ["ultra", "leicht"]
+    // Splits the modifier into existing words: "ultraleicht" -> ["ultra", "leicht"]
     const memo = new Map();
     function splitModifier(lower) {
         if (known.has(lower)) return [known.get(lower)];
         if (memo.has(lower)) return memo.get(lower);
-        memo.set(lower, null); // evita recursão infinita
+        memo.set(lower, null); // prevents infinite recursion
         let result = null;
         for (let i = MIN_PART; i <= lower.length - MIN_PART && !result; i++) {
             const first = lower.slice(0, i);
@@ -307,8 +320,8 @@ function markCompoundsByDecomposition(entries) {
                 const head = capitalize(word.slice(i + link.length));
                 if (head.length < MIN_PART || !nouns.has(head)) continue;
 
-                // prefere divisões equilibradas (Bahnhof+Straße, não Bahn+Hofstraße)
-                // e modificadores que sejam substantivos
+                // prefer balanced splits (Bahnhof+Straße, not Bahn+Hofstraße)
+                // and modifiers that are nouns
                 const score = Math.min(modifier.length, head.length) + (nouns.has(modifier) ? 100 : 0);
                 if (!best || score > best.score) best = { modParts, head, score };
             }
@@ -324,19 +337,19 @@ function markCompoundsByDecomposition(entries) {
     return found;
 }
 
-// Cadeia de decisão. Devolve { emoji, source } ou null.
+// Decision chain. Returns { emoji, source } or null.
 async function resolveEmoji(emo, entry, cleanEntry) {
     const candidates = getQueryCandidates(entry);
 
-    // 1) Dicionário Unicode (exato)
+    // 1) Unicode emoji data (exact match)
     let emoji = getEmojiFromUnicode(entry);
     if (emoji) return { emoji, source: "unicode" };
 
-    // 2) Emo com confiança boa
+    // 2) Emo with good confidence
     emoji = await getEmojiFromEmo(emo, candidates, EMO_THRESHOLD);
     if (emoji) return { emoji, source: "emo" };
 
-    // 3) Compostos: o núcleo é o último componente (Handschuh -> Schuh)
+    // 3) Compounds: the head is the last component (Handschuh -> Schuh)
     const parts = (cleanEntry.components || []).filter((c) => wordPattern.test(c));
     if (parts.length > 0) {
         const head = parts[parts.length - 1];
@@ -346,7 +359,7 @@ async function resolveEmoji(emo, entry, cleanEntry) {
         if (emoji) return { emoji, source: "component" };
     }
 
-    // 4) Palpite: aceita o melhor candidato do Emo, mesmo com pouca confiança
+    // 4) Guess: accept Emo's best candidate, even with low confidence
     emoji = await getEmojiFromEmo(emo, candidates, EMO_GUESS_THRESHOLD);
     if (emoji) return { emoji, source: "guess" };
 
@@ -354,10 +367,10 @@ async function resolveEmoji(emo, entry, cleanEntry) {
 }
 
 async function main() {
-    console.log("A carregar modelo Emo localmente (~11MB)...");
+    console.log("Loading the Emo model locally (~11 MB)...");
     const { Emo } = await import("@desert-ant-labs/emo/native");
     const emo = await Emo.load();
-    console.log("✅ Emo carregado. A iniciar processamento do dicionário...\n");
+    console.log("✅ Emo loaded. Processing the dictionary...\n");
 
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     const entries = new Map();
@@ -392,9 +405,9 @@ async function main() {
         const key = `${cleanEntry.word.toLocaleLowerCase("de-DE")}::${cleanEntry.partOfSpeech}`;
 
         if (!entries.has(key)) {
-            // Prefixos e sufixos não têm um emoji que faça sentido
+            // Prefixes and suffixes don't have a meaningful emoji
             const isAffix = entry.pos === "prefix" || entry.pos === "suffix";
-            // Passa o objeto cru do Kaikki (tem os "senses" com as glosses em inglês)
+            // Pass the raw Kaikki entry (its "senses" hold the English glosses)
             const result = isAffix ? null : await resolveEmoji(emo, entry, cleanEntry);
 
             if (result) {
@@ -413,24 +426,24 @@ async function main() {
                 compoundCount += 1;
             }
 
-            // Log de progresso a cada 1000 palavras guardadas
+            // Progress log every 1000 saved words
             if (kept % 1000 === 0) {
-                console.log(`Progresso: ${kept} palavras guardadas (Última: ${cleanEntry.word} ${cleanEntry.emoji})`);
+                console.log(`Progress: ${kept} words saved (latest: ${cleanEntry.word} ${cleanEntry.emoji})`);
             }
 
-            // Limite opcional para testar numa amostra pequena
+            // Optional limit for testing on a small sample
             if (kept >= LIMIT) break;
         }
     }
 
-    // Segunda passada: acha compostos que a etimologia não registrou
+    // Second pass: find compounds the etymology doesn't record
     const decomposed = markCompoundsByDecomposition(entries);
-    console.log(`\nSegunda passada: ${decomposed.length} compostos adicionais encontrados por decomposição.`);
-    console.log("Amostra (confira se fazem sentido):");
+    console.log(`\nSecond pass: ${decomposed.length} additional compounds found by decomposition.`);
+    console.log("Sample (check that these make sense):");
     for (const e of decomposed.slice(0, 25)) console.log(`  ${e.word} = ${e.components.join(" + ")}`);
     compoundCount += decomposed.length;
 
-    console.log("\nProcessamento concluído. A gravar no disco...");
+    console.log("\nProcessing done. Writing to disk...");
 
     const output = fs.createWriteStream(outputPath, { encoding: "utf8" });
     for (const entry of entries.values()) {
@@ -443,9 +456,9 @@ async function main() {
         output.end();
     });
 
-    console.log(`Leitura: ${read} entradas | Salvas: ${kept} entradas válidas.`);
-    console.log(`Total de palavras compostas identificadas: ${compoundCount}`);
-    console.log("Origem dos emojis:", stats);
+    console.log(`Read: ${read} entries | Saved: ${kept} valid entries.`);
+    console.log(`Compounds identified: ${compoundCount}`);
+    console.log("Emoji sources:", stats);
 }
 
 main().catch((error) => {

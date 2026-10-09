@@ -1,5 +1,6 @@
-// Efeitos: sintetizados pelo navegador (não precisa de arquivos).
-// Música: toca o arquivo data/music.mp3 em loop (coloque o seu lá).
+// Sound effects are synthesized by the browser (no audio files needed).
+// Background music loops assets/audio/music.mp3.
+// Each sound is a list of [frequency (Hz), start (s), duration (s)] tones.
 const SOUNDS = {
 	place: [[440, 0, 0.08]],
 	link: [[520, 0, 0.08], [660, 0.07, 0.1]],
@@ -8,14 +9,14 @@ const SOUNDS = {
 };
 
 class GameAudio {
-	constructor(musicUrl = "data/music.mp3") {
+	constructor(musicUrl = "assets/audio/music.mp3") {
 		this.storageKey = "komposita-audio";
 		this.settings = { effects: true, effectsVolume: 0.6, music: true, musicVolume: 0.4, ...this.load() };
 		this.ctx = null;
 		this.music = new Audio(musicUrl);
 		this.music.loop = true;
 		this.apply();
-		// navegadores só liberam áudio depois de um gesto do usuário
+		// browsers only allow audio playback after a user gesture
 		document.addEventListener("pointerdown", () => this.startMusic(), { once: true });
 	}
 
@@ -31,7 +32,7 @@ class GameAudio {
 		try {
 			localStorage.setItem(this.storageKey, JSON.stringify(this.settings));
 		} catch {
-			// sem localStorage: as configurações valem só nesta sessão
+			// no localStorage: settings only last for this session
 		}
 	}
 
@@ -49,7 +50,7 @@ class GameAudio {
 
 	startMusic() {
 		if (!this.settings.music) return;
-		this.music.play().catch(() => {}); // sem gesto ainda, ou arquivo ausente
+		this.music.play().catch(() => {}); // no user gesture yet, or missing file
 	}
 
 	getContext() {

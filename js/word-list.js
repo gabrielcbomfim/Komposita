@@ -1,19 +1,10 @@
 class WordList {
-	constructor({ container, imageUrl, getImageUrl, onSelect, onDragStart }) {
+	constructor({ container, getName, onSelect, onDragStart }) {
 		this.container = container;
-		this.imageUrl = imageUrl;
-		this.getImageUrl = getImageUrl;
+		this.getName = getName;
 		this.onSelect = onSelect;
 		this.onDragStart = onDragStart;
 		this.items = [];
-	}
-
-	getElementName(element) {
-		return element.partOfSpeech === "noun" && element.article ? `${element.article} ${element.word}` : element.word;
-	}
-
-	getSearchName(element) {
-		return this.getElementName(element).toLowerCase();
 	}
 
 	add(element) {
@@ -30,7 +21,9 @@ class WordList {
 	}
 
 	filter(query, category) {
-		return this.items.filter((element) => this.getSearchName(element).includes(query) && (category === "all" || element.partOfSpeech === category));
+		return this.items.filter((element) =>
+			this.getName(element).toLowerCase().includes(query) &&
+			(category === "all" || element.partOfSpeech === category));
 	}
 
 	render(elements = this.items) {
@@ -39,8 +32,10 @@ class WordList {
 	}
 
 	renderElement(element) {
+		const name = this.getName(element);
 		const item = document.createElement("div");
 		item.className = "element-item";
+
 		const button = document.createElement("button");
 		button.className = "element-button";
 		button.type = "button";
@@ -51,18 +46,19 @@ class WordList {
 		button.append(emojiDisplay);
 		button.addEventListener("click", () => this.onSelect(element));
 		button.addEventListener("dragstart", (event) => this.onDragStart(event, element));
-		item.append(button);
-		const name = document.createElement("span");
-		name.className = "element-name";
-		name.textContent = this.getElementName(element);
-		item.append(name);
+
+		const label = document.createElement("span");
+		label.className = "element-name";
+		label.textContent = name;
+
 		const removeButton = document.createElement("button");
 		removeButton.className = "element-remove";
 		removeButton.type = "button";
-		removeButton.setAttribute("aria-label", `Remove ${this.getElementName(element)}`);
+		removeButton.setAttribute("aria-label", `Remove ${name}`);
 		removeButton.textContent = "×";
 		removeButton.addEventListener("click", () => this.remove(element));
-		item.append(removeButton);
+
+		item.append(button, label, removeButton);
 		this.container.append(item);
 	}
 }

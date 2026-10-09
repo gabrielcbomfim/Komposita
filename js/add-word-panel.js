@@ -63,7 +63,8 @@ class AddWordPanel {
 			suggestion.type = "button";
 			suggestion.setAttribute("role", "option");
 			suggestion.textContent = this.getName(element);
-			suggestion.addEventListener("click", () => this.onAdd(element.word));
+			// pass the full name ("das Essen") so homographs like essen/Essen resolve to the clicked entry
+			suggestion.addEventListener("click", () => this.onAdd(this.getName(element)));
 			this.suggestions.append(suggestion);
 		});
 	}

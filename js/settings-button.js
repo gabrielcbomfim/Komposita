@@ -19,7 +19,7 @@ class SettingsButton extends ActionButton {
 		);
 	}
 
-	// uma linha com checkbox (liga/desliga) e slider de volume
+	// one row with an on/off checkbox and a volume slider
 	createSetting(labelText, enabledKey, volumeKey, previewSound) {
 		const row = document.createElement("div");
 		row.className = "setting-row";
@@ -42,7 +42,7 @@ class SettingsButton extends ActionButton {
 		slider.value = this.audio.settings[volumeKey];
 		slider.setAttribute("aria-label", `${labelText} volume`);
 		slider.addEventListener("input", () => this.audio.set(volumeKey, Number(slider.value)));
-		// só toca o exemplo quando o usuário solta o slider
+		// only play the preview once the user releases the slider
 		if (previewSound) slider.addEventListener("change", () => this.audio.play("place"));
 
 		row.append(label, slider);
