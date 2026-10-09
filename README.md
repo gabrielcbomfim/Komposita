@@ -40,13 +40,13 @@ Players get these patterns by using them, not by memorising rules. A failed comb
 
 ## How to play
 
-1. Click **+** and type a German word (e.g. `Haus`), then press <kbd>Enter</kbd>. Typing `die orange` or `Orange` picks the noun; `orange` picks the adjective.
+1. You start with four words: *Haus*, *Tür*, *Schlüssel* and *Schuh*. Between them they hide five compounds. To add more, click **+** and type any German word (e.g. `Hand`), then press <kbd>Enter</kbd>. Typing `die orange` or `Orange` picks the noun; `orange` picks the adjective.
 2. **Drag** words from the list on the right onto the table.
 3. **Link** two words by dragging from one word's dot (●) to another's. If the linked group, read left to right, forms a compound, it merges into the new word.
 4. **Double-click** a line to unlink. Move words around to change the reading order.
 5. Open **Dictionary** to see every compound you've discovered.
 
-Use **⌕** to filter your word list by name or part of speech. **Settings** controls music and sound effects.
+Use **⌕** to filter your word list by name or part of speech. **Settings** controls music and sound effects and has a short **How to play** tutorial.
 
 ## Getting started
 

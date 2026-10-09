@@ -1,5 +1,8 @@
 const CONTACT_GITHUB = "gabrielcbomfim/Komposita";
 const THANKS = "Thank you for playing Komposita! Suggestions and contributions are welcome on GitHub.";
+// Words already in the list on first load. Together they make Haustür, Hausschuh,
+// Hausschlüssel, Türschlüssel and Haustürschlüssel.
+const STARTER_WORDS = ["Haus", "Tür", "Schlüssel", "Schuh"];
 
 class KompositaApp {
 	constructor() {
@@ -104,7 +107,12 @@ class KompositaApp {
 		try {
 			await this.dictionary.load();
 			this.crafting.build();
+			for (const word of STARTER_WORDS) {
+				const entry = this.dictionary.find(word);
+				if (entry) this.wordList.add(entry);
+			}
 			this.wordList.render();
+			this.setStatus("Drag two words onto the table and link their dots.");
 		} catch (error) {
 			this.setStatus("Could not load the word list.");
 			console.error(error);

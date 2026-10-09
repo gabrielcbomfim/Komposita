@@ -131,6 +131,7 @@ h1 { margin: 0; color: #26231e; font-size: 2rem; line-height: 1; }
 .workspace-dot:hover { transform: scale(1.4); }
 
 /* ---------- dialogs: buttons, settings, dictionary ---------- */
+.action-window { max-height: calc(100vh - 48px); overflow-y: auto; }
 .action-window-content p { margin: 0; }
 .action-window-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .action-window-button { padding: 8px 14px; border: 1px solid #d5cdbd; border-radius: 6px; background: #fffdf8; color: #706654; cursor: pointer; }
@@ -138,8 +139,10 @@ h1 { margin: 0; color: #26231e; font-size: 2rem; line-height: 1; }
 .action-window-button.is-danger { border-color: #bf5b3f; background: #bf5b3f; color: #fffaf0; }
 .setting-row { display: grid; gap: 6px; margin-bottom: 14px; }
 .setting-row input[type="range"] { width: 100%; accent-color: #bf5b3f; }
-.contact-info { margin-top: 14px; padding-top: 14px; border-top: 1px solid #eee8dc; }
-.contact-info[hidden] { display: none; }
+.tutorial-section { margin-bottom: 12px; }
+.tutorial-info, .contact-info { margin-top: 14px; padding-top: 14px; border-top: 1px solid #eee8dc; }
+.tutorial-info[hidden], .contact-info[hidden] { display: none; }
+.tutorial-info ol { display: grid; gap: 6px; margin: 10px 0 0; padding-left: 20px; }
 .contact-info p + p { margin-top: 8px; }
 .dictionary-list { display: grid; max-height: 50vh; gap: 6px; overflow-y: auto; margin: 12px 0 0; padding: 0; list-style: none; }
 .dictionary-item { display: flex; align-items: center; gap: 10px; }
