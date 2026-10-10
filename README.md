@@ -121,7 +121,7 @@ scripts/                  the data pipeline
 
 ## Who did what
 
-The idea, the architecture and the scripts (the dictionary pipeline, the compound detection, the crafting logic) are mine. I used Claude (Anthropic) for the frontend.
+The idea, the architecture and the scripts (the dictionary pipeline, the compound detection, the crafting logic) are mine. I used Claude (Anthropic) for the frontend, and for refactoring.
 
 ## Credits
 
