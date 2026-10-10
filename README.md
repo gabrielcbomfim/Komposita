@@ -63,7 +63,7 @@ To find out whether a noun is a compound, it tries, in order:
 2. An `X + Y` pattern in the etymology text.
 3. A second pass of my own for nouns Wiktionary doesn't analyse. It tries to cut the word into `modifier + (linking element) + head`, where every piece has to exist in the dictionary and the head has to be a noun. It prefers balanced cuts and noun modifiers (*Bahnhof + Straße*, not *Bahn + Hofstraße*). This found 4,335 more compounds.
 
-Emojis are picked offline: first an exact match in the Unicode emoji names, then the small [Emo](https://www.npmjs.com/package/@desert-ant-labs/emo) model, and for compounds the emoji of the head (*Handschuh* gets the shoe). There's also [`generate-emojis-ai.js`](scripts/generate-emojis-ai.js) to redo them with an LLM.
+Emojis are picked offline: first an exact match in the Unicode emoji names, then the small [Emo](https://www.npmjs.com/package/@desert-ant-labs/emo) model, and for compounds the emoji of the head (*Handschuh* gets the shoe).
 
 **Crafting** ([`js/crafting.js`](js/crafting.js)). Every compound gets broken down recursively into its roots, linking elements are dropped, and the ordered roots become the recipe key:
 
@@ -96,10 +96,6 @@ Only needed if you want to regenerate `data/german-words.jsonl` (Node 18+):
 npm install
 npm run build:dictionary -- path/to/kaikki-german.jsonl data/german-words.jsonl
 # LIMIT=300 for a quick test
-
-# optional, emojis with an LLM:
-export OPENROUTER_API_KEY=...
-npm run generate:emojis
 ```
 
 ## What's in the repo
