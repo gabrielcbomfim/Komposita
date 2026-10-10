@@ -11,7 +11,6 @@
   "scripts": {
     "start": "npx --yes http-server -c-1 -o",
     "build:dictionary": "node scripts/build-dictionary.js",
-    "generate:emojis": "node scripts/generate-emojis-ai.js",
     "demo:crafting": "node scripts/crafting-demo.js"
   },
   "devDependencies": {

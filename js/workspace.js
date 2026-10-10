@@ -224,12 +224,6 @@ class Workspace {
 		this.place(result, x, y);
 	}
 
-	refreshEmoji(element) {
-		for (const { element: placed, node } of this.tokens.values()) {
-			if (placed.word === element.word) node.querySelector(".element-emoji").textContent = element.emoji || "❓";
-		}
-	}
-
 	clear() {
 		for (const item of [...this.tokens.values()]) item.node.remove();
 		this.tokens.clear();

@@ -127,12 +127,6 @@ class KompositaApp {
 		this.wordList.render();
 		this.audio.play("discover");
 		this.setStatus(`${elements.map((e) => e.word).join(" + ")} = ${this.dictionary.getName(result)}`);
-		this.emojiService.resolveEmoji(result)
-			.then(() => {
-				this.wordList.render();
-				this.workspace.refreshEmoji(result);
-			})
-			.catch((error) => console.warn("Could not resolve emoji.", error));
 		return result;
 	}
 
@@ -140,7 +134,7 @@ class KompositaApp {
 		this.resultText.textContent = message;
 	}
 
-	async addWordToList(value) {
+	addWordToList(value) {
 		const word = value.trim().replace(/[<>]/g, "");
 		if (!word) return;
 		const match = this.dictionary.find(word);
@@ -150,12 +144,6 @@ class KompositaApp {
 		}
 
 		match.discovered = true;
-
-		try {
-			await this.emojiService.resolveEmoji(match);
-		} catch (error) {
-			console.warn("Could not resolve emoji; keeping the dictionary one.", error);
-		}
 		this.wordList.add(match);
 		this.addWordSearch.value = "";
 		this.addSuggestions.innerHTML = "";
