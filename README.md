@@ -1,5 +1,12 @@
 # Komposita
 
+[![Deploy](https://github.com/gabrielcbomfim/Komposita/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/gabrielcbomfim/Komposita/actions/workflows/pages/pages-build-deployment)
+[![Play online](https://img.shields.io/badge/play-online-2ea44f)](https://gabrielcbomfim.github.io/Komposita/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Data: CC BY-SA 4.0](https://img.shields.io/badge/data-CC%20BY--SA%204.0-lightgrey)](#credits)
+[![Node >= 18](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](package.json)
+![Vanilla JS](https://img.shields.io/badge/vanilla-JavaScript-f7df1e?logo=javascript&logoColor=black)
+
 A small game for playing with German compound nouns. You link *Haus* and *Tür* and get *die Haustür*. Add *Schlüssel* and you get *der Haustürschlüssel*.
 
 **Play it here: https://gabrielcbomfim.github.io/Komposita/** (use a computer, dragging doesn't work on touch screens yet).
