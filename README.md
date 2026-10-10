@@ -11,6 +11,10 @@ Link *Haus* 🏠 and *Tür* 🚪 and get ***die Haustür***. Add *Schlüssel* �
 ![Vanilla JS](https://img.shields.io/badge/vanilla-JS-f7df1e.svg)
 ![No build step](https://img.shields.io/badge/build-none-brightgreen.svg)
 
+### ▶️ [Play online at gabrielcbomfim.github.io/Komposita](https://gabrielcbomfim.github.io/Komposita/)
+
+<sub>Best played on a computer: dragging words doesn't work on touch screens yet.</sub>
+
 <img src="docs/screenshot.png" alt="Komposita: words on the tableau, linked by lines, with the word list on the right" width="900">
 
 </div>
@@ -50,7 +54,9 @@ Use **⌕** to filter your word list by name or part of speech. **Settings** con
 
 ## Getting started
 
-The game is a **static site** with no build step and no dependencies. Because it loads the dictionary with `fetch`, it has to be served over HTTP (opening `index.html` directly from disk won't work):
+The easiest way is to **[play online](https://gabrielcbomfim.github.io/Komposita/)**. Nothing to install.
+
+To run it locally: the game is a **static site** with no build step and no dependencies, but it loads the dictionary with `fetch`, so it has to be served over HTTP (opening `index.html` directly from disk won't work):
 
 ```bash
 git clone https://github.com/gabrielcbomfim/Komposita.git
@@ -61,7 +67,7 @@ npx http-server -c-1 -o     # or: npm start
 python -m http.server 8000  # then open http://localhost:8000
 ```
 
-To publish it, enable **GitHub Pages** on the `main` branch: the repository is already a deployable site.
+The online version is served by **GitHub Pages** from the `main` branch, so every push to `main` updates the live game.
 
 ## How it works
 
