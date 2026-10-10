@@ -169,7 +169,7 @@ The game picks up `data/german-words-with-emojis-ai.jsonl` automatically if it e
 - **Heuristic data.** Etymology parsing and the decomposition pass can produce false splits, and some emojis are rough guesses (*Hand* → 🤝).
 - **No ambiguity handling.** If two compounds reduce to the same roots, only one of them is kept as a recipe.
 - **Progress isn't saved** between sessions yet.
-- Possible next steps: show the bracketing tree of a discovered compound, mark the *Fugenelement* explicitly, and add a game mode where the player has to guess the gender from the head.
+- Possible next steps: show the bracketing tree of a discovered compound, mark the *Fugenelement* explicitly, and add a game mode where the player has to guess the gender from the head. Integrating AI to generate new compounds and emojis is also on the roadmap.
 
 ## Credits & licenses
 
@@ -177,8 +177,7 @@ The game picks up `data/german-words-with-emojis-ai.jsonl` automatically if it e
 - **Lexical data:** derived from [Wiktionary](https://www.wiktionary.org/) via [kaikki.org / wiktextract](https://kaikki.org/) (Tatu Ylonen, *Wiktextract: Wiktionary as Machine-Readable Structured Data*, LREC 2022). Wiktionary content is licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), so `data/german-words.jsonl` is distributed under the same license.
 - **Emoji metadata:** [Emojibase](https://emojibase.dev/) (MIT) and Unicode CLDR.
 - **Emoji model:** [Emo](https://www.npmjs.com/package/@desert-ant-labs/emo) by Desert Ant Labs.
-- **Icons and music:** _add source and license here._
-
+- **Music:** John Sebastian Bach.
 <div align="center">
 <sub>Viel Spaß beim Zusammensetzen! 🧩</sub>
 </div>
